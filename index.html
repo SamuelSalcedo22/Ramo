@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ramo para Juli</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Parisienne&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+  /* Layout: una sola columna centrada; la terminal con el ramo arriba y la carta debajo, todo de noche */
+  :root {
+    --bg: #07060b;
+    --panel: #0e0c14;
+    --bar: #17141f;
+    --line: #2a2436;
+    --fg: #efe6f3;
+    --muted: #9a8fa8;
+    --rose: #ff5c8a;
+    --leaf: #6fdc8c;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    --script: "Parisienne", "Snell Roundhand", "Segoe Script", cursive;
+    --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+    color-scheme: dark;
+  }
+  html, body { margin: 0; } 
+  html, body { background: var(--bg); color: var(--fg); }
+  body {
+    font-family: var(--serif);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 28px 48px;
+    overflow-x: hidden;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+
+  .term {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px -30px rgba(255, 92, 138, .25);
+  }
+  .bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px;
+    background: var(--bar);
+    border-bottom: 1px solid var(--line);
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+  }
+  .dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+  .dot:nth-child(1) { background: #ff5f57; }
+  .dot:nth-child(2) { background: #febc2e; }
+  .dot:nth-child(3) { background: #28c840; }
+  .bar .name { margin-left: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .stage { position: relative; width: 100%; aspect-ratio: 1 / 1.08; max-height: 78vh; cursor: pointer; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .log {
+    position: absolute; left: 14px; top: 12px; right: 14px;
+    font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--muted);
+    pointer-events: none; white-space: pre-wrap;
+  }
+  .log .ok { color: var(--leaf); }
+  .log .hl { color: var(--rose); }
+
+  .letter { display: flex; flex-direction: column; gap: 14px; padding-inline: 4px; }
+  .label { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }
+  h1 {
+    font-family: var(--script); font-weight: 400;
+    font-size: clamp(48px, 11vw, 84px); line-height: 1.05; margin: 0;
+    color: var(--rose); text-wrap: balance;
+    text-shadow: 0 0 28px rgba(255, 92, 138, .35);
+  }
+  .letter p { font-size: clamp(19px, 2.6vw, 22px); line-height: 1.6; margin: 0; max-width: 60ch; color: var(--fg); }
+  .letter p.sign { font-style: italic; color: var(--muted); }
+  .fade { opacity: 0; transform: translateY(8px); transition: opacity 1.4s ease, transform 1.4s ease; }
+  .fade.on { opacity: 1; transform: none; }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  button {
+    font-family: var(--mono); font-size: 13px;
+    background: transparent; color: var(--fg);
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: 10px 18px; cursor: pointer;
+  }
+  button:hover { border-color: var(--rose); color: var(--rose); }
+  button:focus-visible { outline: 2px solid var(--rose); outline-offset: 3px; }
+  .hint { font-family: var(--mono); font-size: 12px; color: var(--muted); align-self: center; }
+
+  @media (prefers-reduced-motion: reduce) { .fade { transition: none; opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="term">
+    <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="name">ramo_para_juli.py — python</span></div>
+    <div class="stage" id="stage" title="Toca el ramo">
+      <canvas id="cv" aria-label="Ramo de flores animado hecho con caracteres de colores"></canvas>
+      <div class="log" id="log" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <section class="letter">
+    <div class="label fade" id="l1">mensaje.txt</div>
+    <h1 class="fade" id="l2">Te amo, Juli</h1>
+    <p class="fade" id="l3">Si pudiera programar todo lo que siento por ti, no me alcanzarían las líneas de código. Por eso te hice este ramo: nunca se marchita, igual que lo que siento por ti.</p>
+    <p class="fade" id="l4">Gracias por llenar mis días de color, por tu risa y por cada momento a tu lado. Eres mi flor favorita. Te amo muchísimo.</p>
+    <p class="fade sign" id="l5">Con todo mi amor, Samuel</p>
+    <div class="actions fade" id="l6">
+      <button id="again" type="button">Volver a florecer</button>
+      <span class="hint">toca el ramo para mandar corazones</span>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const stage = document.getElementById('stage');
+  const logEl = document.getElementById('log');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- pequeño RNG con semilla, para que el ramo sea siempre el mismo ----------
+  let seed = 21;
+  const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  const uni = (a, b) => a + (b - a) * rnd();
+
+  const norm = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0]/l, v[1]/l, v[2]/l]; };
+  const cross = (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+  const add = (p, d, k) => [p[0]+d[0]*k, p[1]+d[1]*k, p[2]+d[2]*k];
+  const basis = axis => {
+    const helper = Math.abs(axis[1]) < 0.9 ? [0,1,0] : [1,0,0];
+    const u = norm(cross(helper, axis));
+    return [u, cross(axis, u)];
+  };
+
+  // Cada punto: ancla, desplazamiento, normal, color, momento en que nace, tipo
+  const P = [];
+  const push = (anchor, off, n, col, birth, span, kind) =>
+    P.push({ a: anchor, o: off, n, c: col, b: birth, s: span, k: kind });
+
+  const PALETTE = [
+    [255, 70, 100],   // rojo rosa
+    [255, 130, 180],  // rosado
+    [220, 80, 210],   // magenta
+    [175, 135, 255],  // lila
+    [255, 205, 90],   // amarillo
+    [255, 145, 70],   // naranja
+    [250, 235, 245],  // blanco
+  ];
+  const GREEN = [95, 205, 110];
+  const DARKGREEN = [60, 150, 80];
+
+  // ---------- papel del ramo (cono) ----------
+  const WRAP = [200, 160, 255];
+  for (let i = 0; i < 7000; i++) {
+    const t = rnd();                       // 0 abajo, 1 arriba
+    const y = -0.98 + t * 0.86;
+    const r = 0.04 + t * 0.32;
+    const th = rnd() * Math.PI * 2;
+    const fold = 0.75 + 0.25 * Math.cos(th * 9);
+    const p = [Math.cos(th) * r * fold * 1.0, y, Math.sin(th) * r];
+    const n = norm([Math.cos(th), 0.45, Math.sin(th)]);
+    const shade = 0.75 + 0.25 * Math.sin(th * 9);
+    push(p, [0,0,0], n, WRAP.map(v => v * shade), t * 0.18, 0.02, 'wrap');
+  }
+  // lazo
+  for (let i = 0; i < 1400; i++) {
+    const th = rnd() * Math.PI * 2;
+    const y = -0.62 + uni(-0.025, 0.025);
+    const r = 0.04 + ((y + 0.98) / 0.86) * 0.32 + 0.008;
+    push([Math.cos(th) * r, y, Math.sin(th) * r], [0,0,0], norm([Math.cos(th), 0.2, Math.sin(th)]), [255, 60, 95], 0.2, 0.03, 'wrap');
+  }
+  for (const side of [-1, 1]) {           // dos lazadas del moño
+    for (let i = 0; i < 700; i++) {
+      const u = rnd() * Math.PI * 2;
+      const cx = side * 0.02, cz = 0.175;
+      const p = [cx + side * 0.07 * (1 + Math.cos(u)) * 0.9, -0.62 + 0.045 * Math.sin(u), cz + 0.02 * Math.cos(u)];
+      push(p, [0,0,0], [0, 0, 1], [255, 80, 120], 0.22, 0.03, 'bow');
+    }
+  }
+
+  // ---------- flores ----------
+  const N = 9;
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  const C = [0, 0.08, 0], D = 0.6;
+  const heads = [];
+  for (let i = 0; i < N; i++) {
+    const el = (80 - 62 * Math.sqrt(i / (N - 1))) * Math.PI / 180;
+    const az = i * golden;
+    const d = [Math.cos(el) * Math.cos(az), Math.sin(el), Math.cos(el) * Math.sin(az)];
+    heads.push({ pos: add(C, d, D * uni(0.9, 1.05)), d, az, tulip: i % 3 === 1, col: PALETTE[i % PALETTE.length] });
+  }
+
+  heads.forEach((h, i) => {
+    const R = h.tulip ? 0.16 : 0.2;
+    const birth = 0.5 + i * 0.03;
+    const axis = norm(add(h.d, [0, 1, 0], 0.25));
+    const [u, v] = basis(axis);
+
+    // tallo: desde dentro del papel hasta la flor
+    const neck = [Math.cos(h.az) * 0.04, -0.2, Math.sin(h.az) * 0.04];
+    const bottom = [Math.cos(h.az) * 0.02, -0.92, Math.sin(h.az) * 0.02];
+    const top = add(h.pos, axis, -R * 0.7);
+    const seg = (a, b, n, t0, t1) => {
+      for (let k = 0; k < n; k++) {
+        const t = k / n;
+        const p = [a[0] + (b[0]-a[0])*t, a[1] + (b[1]-a[1])*t, a[2] + (b[2]-a[2])*t];
+        push(p, [0,0,0], [0,0,1], GREEN, t0 + (t1 - t0) * t, 0.02, 'stem');
+      }
+    };
+    seg(bottom, neck, 120, 0.12, 0.25);
+    seg(neck, top, 260, 0.25, 0.48);
+
+    // hoja a media altura
+    if (i % 2 === 0) {
+      const base = [neck[0] + (top[0]-neck[0])*0.35, neck[1] + (top[1]-neck[1])*0.35, neck[2] + (top[2]-neck[2])*0.35];
+      const out = norm([Math.cos(h.az + 0.6), 0.5, Math.sin(h.az + 0.6)]);
+      const side = norm(cross(out, [0, 1, 0]));
+      const nrm = norm(cross(out, side));
+      for (let k = 0; k < 700; k++) {
+        const l = rnd(), w = uni(-1, 1);
+        const wid = Math.sin(Math.PI * l) * 0.055;
+        let p = add(base, out, l * 0.24);
+        p = add(p, [0, 1, 0], Math.sin(l * Math.PI) * 0.03);
+        p = add(p, side, w * wid);
+        const vein = Math.abs(w) < 0.12 ? 0.7 : 1;
+        push(p, [0,0,0], nrm, DARKGREEN.map(x => x * vein * 1.15), 0.4 + l * 0.12, 0.03, 'leaf');
+      }
+    }
+
+    // cabeza de la flor
+    const center = h.pos;
+    if (!h.tulip) {
+      // rosa: cúpula con pétalos en espiral
+      for (let k = 0; k < 6500; k++) {
+        const th = rnd() * Math.PI * 2;
+        const ph = Math.acos(1 - rnd() * 1.6);              // 0..~127°
+        const ruffle = 1 + 0.07 * Math.sin(th * 5 + ph * 4);
+        const lx = Math.sin(ph) * Math.cos(th) * R * ruffle;
+        const ly = Math.cos(ph) * R * 0.78;
+        const lz = Math.sin(ph) * Math.sin(th) * R * ruffle;
+        const off = [u[0]*lx + axis[0]*ly + v[0]*lz, u[1]*lx + axis[1]*ly + v[1]*lz, u[2]*lx + axis[2]*ly + v[2]*lz];
+        const n = norm(off);
+        const spiral = 0.5 + 0.5 * Math.sin(3 * th + 13 * ph);
+        const m = 0.62 + 0.38 * Math.pow(spiral, 0.6);
+        const col = ph > 1.85 ? GREEN : h.col.map(x => x * m);
+        push(center, off, n, col, birth, 0.22, 'head');
+      }
+    } else {
+      // tulipán: copa con tres puntas
+      for (let k = 0; k < 5500; k++) {
+        const th = rnd() * Math.PI * 2;
+        const yy = uni(-0.65, 1.0);
+        const edge = 0.55 + 0.4 * Math.abs(Math.cos(th * 1.5));
+        if (yy > edge) continue;
+        const rr = R * 0.72 * Math.sqrt(Math.max(0, 1 - Math.pow((yy - 0.05) / 1.05, 2)));
+        const lx = Math.cos(th) * rr, lz = Math.sin(th) * rr, ly = yy * R;
+        const off = [u[0]*lx + axis[0]*ly + v[0]*lz, u[1]*lx + axis[1]*ly + v[1]*lz, u[2]*lx + axis[2]*ly + v[2]*lz];
+        const n = norm([u[0]*Math.cos(th) + v[0]*Math.sin(th) + axis[0]*0.2, u[1]*Math.cos(th) + v[1]*Math.sin(th) + axis[1]*0.2, u[2]*Math.cos(th) + v[2]*Math.sin(th) + axis[2]*0.2]);
+        const m = 0.7 + 0.3 * Math.cos(th * 3);
+        push(center, off, n, h.col.map(x => x * m), birth, 0.22, 'head');
+      }
+    }
+  });
+
+  // flores pequeñitas de relleno (nube blanca)
+  for (let i = 0; i < 260; i++) {
+    const az = rnd() * Math.PI * 2, el = uni(0.25, 1.35);
+    const d = [Math.cos(el) * Math.cos(az), Math.sin(el), Math.cos(el) * Math.sin(az)];
+    const p = add(C, d, D * uni(0.95, 1.22));
+    push(p, [0,0,0], d, [255, 248, 252], 0.86 + rnd() * 0.1, 0.03, 'spark');
+  }
+
+  // ---------- grilla de caracteres ----------
+  const RAMP = ' .,:;-=+*#%@';
+  let W, H, cols, rows, cw, ch, fs, dpr, zbuf, cbuf, lbuf, kbuf;
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = stage.clientWidth; H = stage.clientHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    fs = Math.max(7, Math.min(13, W / 72));
+    ctx.font = `${fs}px JetBrains Mono, ui-monospace, Menlo, monospace`;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.12;
+    cols = Math.floor(W / cw); rows = Math.floor(H / ch);
+    zbuf = new Float32Array(cols * rows);
+    cbuf = new Int32Array(cols * rows);
+    lbuf = new Float32Array(cols * rows);
+    kbuf = new Uint8Array(cols * rows);
+  }
+
+  // corazones y estrellas (2D, en celdas)
+  const hearts = [];
+  const stars = Array.from({ length: 70 }, () => ({ x: Math.random(), y: Math.random(), p: Math.random() * 6 }));
+
+  let start = performance.now();
+  const GROW = reduce ? 0.001 : 7.5;   // segundos para florecer
+  let lines = [], shownLetter = false;
+
+  const LOG = [
+    [0.0, '$ python ramo_para_juli.py'],
+    [0.6, '> envolviendo el ramo...'],
+    [2.0, '> creciendo 9 tallos...'],
+    [4.0, '> abriendo rosas y tulipanes...'],
+    [7.2, '<span class="ok">✔ listo.</span> <span class="hl">para Juli, con amor ♥</span>'],
+  ];
+
+  function frame(now) {
+    const t = (now - start) / 1000;
+    const g = Math.min(1, t / GROW);
+
+    // log de terminal
+    const shown = LOG.filter(l => t >= l[0] * (reduce ? 0 : 1)).map(l => l[1]);
+    if (shown.length !== lines.length) { lines = shown; logEl.innerHTML = lines.join('\n'); }
+    if (t > 9.5 && logEl.style.opacity !== '0') { logEl.style.transition = 'opacity 1.5s'; logEl.style.opacity = '0'; }
+    if (!shownLetter && (g >= 1 || reduce)) { shownLetter = true; revealLetter(); }
+
+    zbuf.fill(-1e9); kbuf.fill(0);
+
+    const ang = t * 0.35 + 0.6;
+    const ca = Math.cos(ang), sa = Math.sin(ang);
+    const tilt = -0.12, ct = Math.cos(tilt), st = Math.sin(tilt);
+    const sway = Math.sin(t * 0.8) * 0.03;
+    const scale = Math.min(cols * cw, rows * ch) * 0.5;
+    const cx = (cols * cw) / 2, cy = (rows * ch) / 2 - 0.1 * scale;
+    const f = 3.2;
+    const L = norm([-0.45, 0.6, 0.75]);
+
+    for (let i = 0; i < P.length; i++) {
+      const q = P[i];
+      let s = (g - q.b) / q.s;
+      if (s <= 0) continue;
+      if (s > 1) s = 1;
+      const e = 1 - Math.pow(1 - s, 3);
+      let x = q.a[0] + q.o[0] * e, y = q.a[1] + q.o[1] * e, z = q.a[2] + q.o[2] * e;
+      x += sway * (y + 1);
+      // rotar en Y
+      let rx = x * ca + z * sa, rz = -x * sa + z * ca;
+      // inclinar en X
+      let ry = y * ct - rz * st; rz = y * st + rz * ct;
+      const persp = f / (f - rz);
+      const px = cx + rx * scale * persp;
+      const py = cy - ry * scale * persp;
+      const col = (px / cw) | 0, row = (py / ch) | 0;
+      if (col < 0 || row < 0 || col >= cols || row >= rows) continue;
+      const idx = row * cols + col;
+      if (rz <= zbuf[idx]) continue;
+
+      // luz
+      let lum;
+      if (q.k === 'stem') lum = 0.55 + 0.25 * Math.sin(i);
+      else if (q.k === 'spark') lum = 0.6 + 0.4 * Math.sin(t * 3 + i);
+      else {
+        const n = q.n;
+        let nx = n[0] * ca + n[2] * sa, nz = -n[0] * sa + n[2] * ca;
+        let ny = n[1] * ct - nz * st; nz = n[1] * st + nz * ct;
+        let d = nx * L[0] + ny * L[1] + nz * L[2];
+        if (q.k === 'leaf' || q.k === 'wrap') d = Math.abs(d);
+        lum = 0.3 + 0.7 * Math.max(0, d);
+      }
+      zbuf[idx] = rz;
+      lbuf[idx] = lum;
+      const m = 0.55 + 0.5 * lum;
+      cbuf[idx] = ((Math.min(255, q.c[0] * m) | 0) << 16) | ((Math.min(255, q.c[1] * m) | 0) << 8) | (Math.min(255, q.c[2] * m) | 0);
+      kbuf[idx] = q.k === 'spark' ? 2 : 1;
+    }
+
+    // dibujar
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.font = `${fs}px JetBrains Mono, ui-monospace, Menlo, monospace`;
+
+    // estrellas de fondo
+    for (const s of stars) {
+      const a = 0.15 + 0.25 * (0.5 + 0.5 * Math.sin(t * 1.3 + s.p));
+      ctx.fillStyle = `rgba(200,180,230,${a})`;
+      ctx.fillText(s.p > 3 ? '.' : '·', ((s.x * cols) | 0) * cw, ((s.y * rows) | 0) * ch);
+    }
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const idx = r * cols + c;
+        if (!kbuf[idx]) continue;
+        const v = cbuf[idx];
+        ctx.fillStyle = `rgb(${v >> 16},${(v >> 8) & 255},${v & 255})`;
+        const chr = kbuf[idx] === 2 ? '*' : RAMP[Math.min(RAMP.length - 1, 1 + ((lbuf[idx] * (RAMP.length - 1)) | 0))];
+        ctx.fillText(chr, c * cw, r * ch);
+      }
+    }
+
+    // corazones que suben
+    if (g >= 1 && !reduce && Math.random() < 0.04) spawnHeart(cx + (Math.random() - 0.5) * scale * 0.9, cy - scale * 0.2);
+    for (let i = hearts.length - 1; i >= 0; i--) {
+      const h = hearts[i];
+      h.life += 1 / 60; h.x += h.vx + Math.sin(h.life * 3 + h.p) * 0.4; h.y += h.vy;
+      const a = Math.max(0, 1 - h.life / h.max);
+      if (a <= 0 || h.y < -20) { hearts.splice(i, 1); continue; }
+      ctx.fillStyle = `rgba(${h.c},${a})`;
+      ctx.font = `${fs * h.sz}px JetBrains Mono, ui-monospace, Menlo, monospace`;
+      ctx.fillText('♥', h.x, h.y);
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  function spawnHeart(x, y, burst) {
+    const cs = ['255,92,138', '255,140,180', '220,90,210', '255,200,120'];
+    hearts.push({
+      x, y, vx: burst ? (Math.random() - 0.5) * 2.5 : 0, vy: -(0.5 + Math.random() * (burst ? 2 : 0.8)),
+      life: 0, max: 2.5 + Math.random() * 2.5, p: Math.random() * 6,
+      sz: 1 + Math.random() * 1.4, c: cs[(Math.random() * cs.length) | 0],
+    });
+  }
+
+  function revealLetter() {
+    ['l1', 'l2', 'l3', 'l4', 'l5', 'l6'].forEach((id, i) =>
+      setTimeout(() => document.getElementById(id).classList.add('on'), reduce ? 0 : 300 + i * 900));
+  }
+
+  stage.addEventListener('click', e => {
+    const r = stage.getBoundingClientRect();
+    for (let i = 0; i < 14; i++) spawnHeart(e.clientX - r.left, e.clientY - r.top, true);
+  });
+  document.getElementById('again').addEventListener('click', () => {
+    start = performance.now(); lines = []; logEl.style.opacity = '1';
+  });
+
+  window.addEventListener('resize', resize);
+  resize();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(resize);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
